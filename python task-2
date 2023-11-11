@@ -1,0 +1,115 @@
+import tkinter as tk
+from tkinter import messagebox
+import json
+
+# Initialize an empty budget dictionary
+budget = {
+    "income": 0,
+    "expenses": [],
+}
+
+# Load existing data from a file if available
+def load_data():
+    try:
+        with open("budget_data.json", "r") as file:
+            data = json.load(file)
+            return data
+    except FileNotFoundError:
+        return None
+
+# Save data to a file
+def save_data(data):
+    with open("budget_data.json", "w") as file:
+        json.dump(data, file)
+
+# Function to enter income
+def enter_income():
+    income = float(income_entry.get())
+    budget["income"] = income
+    income_entry.delete(0, tk.END)
+    messagebox.showinfo("Income Entry", f"Income of ${income} added successfully!")
+
+# Function to enter expenses
+def enter_expenses():
+    category = category_entry.get()
+    amount = float(amount_entry.get())
+    budget["expenses"].append({"category": category, "amount": amount})
+    category_entry.delete(0, tk.END)
+    amount_entry.delete(0, tk.END)
+    messagebox.showinfo("Expense Entry", f"Expense of ${amount} in {category} added successfully!")
+
+# Function to calculate remaining budget
+def calculate_budget():
+    total_income = budget["income"]
+    total_expenses = sum(item["amount"] for item in budget["expenses"])
+    remaining_budget = total_income - total_expenses
+    return remaining_budget
+
+# Function to analyze expenses by category
+def analyze_expenses():
+    expense_categories = {}
+    for expense in budget["expenses"]:
+        category = expense["category"]
+        amount = expense["amount"]
+        if category in expense_categories:
+            expense_categories[category] += amount
+        else:
+            expense_categories[category] = amount
+    analysis_text.delete(1.0, tk.END)
+    analysis_text.insert(tk.END, "Expense Analysis:\n")
+    for category, amount in expense_categories.items():
+        analysis_text.insert(tk.END, f"{category}: ${amount}\n")
+
+# Main program
+root = tk.Tk()
+root.title("Budget Tracker")
+root.configure(bg="#F0F0F0")  # Set background color
+
+data = load_data()
+if data:
+    budget.update(data)
+
+# Styling
+label_style = {"bg": "#F0F0F0", "font": ("Arial", 12)}
+entry_style = {"font": ("Arial", 12)}
+
+# Button colors
+button_bg_colors = {
+    "Add Income": "#4CAF50",  # Green
+    "Add Expense": "#FF5733",  # Red-Orange
+    "Calculate Remaining Budget": "#3498DB",  # Blue
+    "Analyze Expenses": "#9B59B6",  # Purple
+    "Exit": "#E74C3C",  # Dark Red
+}
+
+income_label = tk.Label(root, text="Enter Income:", **label_style)
+income_label.pack()
+income_entry = tk.Entry(root, **entry_style)
+income_entry.pack()
+income_button = tk.Button(root, text="Add Income", command=enter_income, **entry_style, bg=button_bg_colors["Add Income"])
+income_button.pack()
+
+category_label = tk.Label(root, text="Expense Category:", **label_style)
+category_label.pack()
+category_entry = tk.Entry(root, **entry_style)
+category_entry.pack()
+
+amount_label = tk.Label(root, text="Expense Amount:", **label_style)
+amount_label.pack()
+amount_entry = tk.Entry(root, **entry_style)
+amount_entry.pack()
+expense_button = tk.Button(root, text="Add Expense", command=enter_expenses, **entry_style, bg=button_bg_colors["Add Expense"])
+expense_button.pack()
+
+calculate_button = tk.Button(root, text="Calculate Remaining Budget", command=lambda: messagebox.showinfo("Remaining Budget", f"Remaining Budget: ${calculate_budget()}"), **entry_style, bg=button_bg_colors["Calculate Remaining Budget"])
+calculate_button.pack()
+
+analysis_text = tk.Text(root, height=10, width=40, **entry_style)
+analysis_text.pack()
+analyze_button = tk.Button(root, text="Analyze Expenses", command=analyze_expenses, **entry_style, bg=button_bg_colors["Analyze Expenses"])
+analyze_button.pack()
+
+exit_button = tk.Button(root, text="Exit", command=lambda: (save_data(budget), root.destroy()), **entry_style, bg=button_bg_colors["Exit"])
+exit_button.pack()
+
+root.mainloop()
